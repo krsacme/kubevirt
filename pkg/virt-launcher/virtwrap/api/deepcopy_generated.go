@@ -566,7 +566,7 @@ func (in *ControllerDriver) DeepCopyInto(out *ControllerDriver) {
 	*out = *in
 	if in.IOThread != nil {
 		in, out := &in.IOThread, &out.IOThread
-		*out = new(uint)
+		*out = new(uint32)
 		**out = **in
 	}
 	return
@@ -778,12 +778,12 @@ func (in *DiskDriver) DeepCopyInto(out *DiskDriver) {
 	*out = *in
 	if in.IOThread != nil {
 		in, out := &in.IOThread, &out.IOThread
-		*out = new(uint)
+		*out = new(uint32)
 		**out = **in
 	}
 	if in.Queues != nil {
 		in, out := &in.Queues, &out.Queues
-		*out = new(uint)
+		*out = new(uint32)
 		**out = **in
 	}
 	return
@@ -1598,7 +1598,7 @@ func (in *InterfaceDriver) DeepCopyInto(out *InterfaceDriver) {
 	*out = *in
 	if in.Queues != nil {
 		in, out := &in.Queues, &out.Queues
-		*out = new(uint)
+		*out = new(uint32)
 		**out = **in
 	}
 	return

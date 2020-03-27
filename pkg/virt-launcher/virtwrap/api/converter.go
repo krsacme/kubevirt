@@ -51,7 +51,7 @@ import (
 const (
 	CPUModeHostPassthrough = "host-passthrough"
 	CPUModeHostModel       = "host-model"
-	defaultIOThread        = uint(1)
+	defaultIOThread        = uint32(1)
 	EFIPath                = "/usr/share/OVMF/OVMF_CODE.fd"
 	EFIVarsPath            = "/usr/share/OVMF/OVMF_VARS.fd"
 )
@@ -73,7 +73,7 @@ type ConverterContext struct {
 	EmulatorThreadCpu *int
 }
 
-func Convert_v1_Disk_To_api_Disk(diskDevice *v1.Disk, disk *Disk, devicePerBus map[string]int, numQueues *uint) error {
+func Convert_v1_Disk_To_api_Disk(diskDevice *v1.Disk, disk *Disk, devicePerBus map[string]int, numQueues *uint32) error {
 
 	if diskDevice.Disk != nil {
 		disk.Device = "disk"
@@ -844,15 +844,15 @@ func Convert_v1_VirtualMachine_To_api_Domain(vmi *v1.VirtualMachineInstance, dom
 	}
 
 	currentAutoThread := defaultIOThread
-	currentDedicatedThread := uint(autoThreads + 1)
+	currentDedicatedThread := autoThreads + 1
 
-	var numQueues *uint
-	var numBlkQueues *uint
+	var numQueues *uint32
+	var numBlkQueues *uint32
 	virtioBlkMQRequested := (vmi.Spec.Domain.Devices.BlockMultiQueue != nil) && (*vmi.Spec.Domain.Devices.BlockMultiQueue)
 	virtioNetMQRequested := (vmi.Spec.Domain.Devices.NetworkInterfaceMultiQueue != nil) && (*vmi.Spec.Domain.Devices.NetworkInterfaceMultiQueue)
-	vcpus := uint(calculateRequestedVCPUs(domain.Spec.CPU.Topology))
+	vcpus := calculateRequestedVCPUs(domain.Spec.CPU.Topology)
 	if vcpus == 0 {
-		vcpus = uint(1)
+		vcpus = 1
 	}
 	if virtioNetMQRequested {
 		numQueues = &vcpus
@@ -886,13 +886,13 @@ func Convert_v1_VirtualMachine_To_api_Domain(vmi *v1.VirtualMachineInstance, dom
 			}
 
 			if dedicatedThread {
-				ioThreadId = currentDedicatedThread
+				ioThreadId = uint32(currentDedicatedThread)
 				currentDedicatedThread += 1
 			} else {
 				ioThreadId = currentAutoThread
 				// increment the threadId to be used next but wrap around at the thread limit
 				// the odd math here is because thread ID's start at 1, not 0
-				currentAutoThread = (currentAutoThread % uint(autoThreads)) + 1
+				currentAutoThread = (currentAutoThread % uint32(autoThreads)) + 1
 			}
 			newDisk.Driver.IOThread = &ioThreadId
 		}
@@ -1341,7 +1341,7 @@ func formatDomainCPUTune(vmi *v1.VirtualMachineInstance, domain *Domain, c *Conv
 	cpuTune := CPUTune{}
 	for idx := 0; idx < int(vcpus); idx++ {
 		vcpupin := CPUTuneVCPUPin{}
-		vcpupin.VCPU = uint(idx)
+		vcpupin.VCPU = uint32(idx)
 		vcpupin.CPUSet = strconv.Itoa(c.CPUSet[idx])
 		cpuTune.VCPUPin = append(cpuTune.VCPUPin, vcpupin)
 	}
@@ -1356,7 +1356,7 @@ func appendDomainEmulatorThreadPin(domain *Domain, allocatedCpu int) {
 	domain.Spec.CPUTune.EmulatorPin = &emulatorThread
 }
 
-func appendDomainIOThreadPin(domain *Domain, thread uint, cpuset string) {
+func appendDomainIOThreadPin(domain *Domain, thread uint32, cpuset string) {
 	iothreadPin := CPUTuneIOThreadPin{}
 	iothreadPin.IOThread = thread
 	iothreadPin.CPUSet = cpuset
@@ -1370,12 +1370,12 @@ func formatDomainIOThreadPin(vmi *v1.VirtualMachineInstance, domain *Domain, c *
 	if vmi.IsCPUDedicated() && vmi.Spec.Domain.CPU.IsolateEmulatorThread {
 		// pin the IOThread on the same pCPU as the emulator thread
 		cpuset := fmt.Sprintf("%d", *c.EmulatorThreadCpu)
-		appendDomainIOThreadPin(domain, uint(1), cpuset)
+		appendDomainIOThreadPin(domain, uint32(1), cpuset)
 	} else if iothreads >= vcpus {
 		// pin an IOThread on a CPU
 		for thread := 1; thread <= iothreads; thread++ {
 			cpuset := fmt.Sprintf("%d", c.CPUSet[thread%vcpus])
-			appendDomainIOThreadPin(domain, uint(thread), cpuset)
+			appendDomainIOThreadPin(domain, uint32(thread), cpuset)
 		}
 	} else {
 		// the following will pin IOThreads to a set of cpus of a balanced size
@@ -1393,7 +1393,7 @@ func formatDomainIOThreadPin(vmi *v1.VirtualMachineInstance, domain *Domain, c *
 			}
 			end := curr + remainder
 			slice := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(c.CPUSet[curr:end+1])), ","), "[]")
-			appendDomainIOThreadPin(domain, uint(thread), slice)
+			appendDomainIOThreadPin(domain, uint32(thread), slice)
 			curr = end + 1
 		}
 	}

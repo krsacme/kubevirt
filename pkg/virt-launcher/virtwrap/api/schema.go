@@ -197,12 +197,12 @@ type CPUTune struct {
 }
 
 type CPUTuneVCPUPin struct {
-	VCPU   uint   `xml:"vcpu,attr"`
+	VCPU   uint32 `xml:"vcpu,attr"`
 	CPUSet string `xml:"cpuset,attr"`
 }
 
 type CPUTuneIOThreadPin struct {
-	IOThread uint   `xml:"iothread,attr"`
+	IOThread uint32 `xml:"iothread,attr"`
 	CPUSet   string `xml:"cpuset,attr"`
 }
 
@@ -398,7 +398,7 @@ type Controller struct {
 
 // BEGIN ControllerDriver
 type ControllerDriver struct {
-	IOThread *uint `xml:"iothread,attr,omitempty"`
+	IOThread *uint32 `xml:"iothread,attr,omitempty"`
 }
 
 // END ControllerDriver
@@ -450,13 +450,13 @@ type DiskTarget struct {
 }
 
 type DiskDriver struct {
-	Cache       string `xml:"cache,attr,omitempty"`
-	ErrorPolicy string `xml:"error_policy,attr,omitempty"`
-	IO          string `xml:"io,attr,omitempty"`
-	Name        string `xml:"name,attr"`
-	Type        string `xml:"type,attr"`
-	IOThread    *uint  `xml:"iothread,attr,omitempty"`
-	Queues      *uint  `xml:"queues,attr,omitempty"`
+	Cache       string  `xml:"cache,attr,omitempty"`
+	ErrorPolicy string  `xml:"error_policy,attr,omitempty"`
+	IO          string  `xml:"io,attr,omitempty"`
+	Name        string  `xml:"name,attr"`
+	Type        string  `xml:"type,attr"`
+	IOThread    *uint32 `xml:"iothread,attr,omitempty"`
+	Queues      *uint32 `xml:"queues,attr,omitempty"`
 }
 
 type DiskSourceHost struct {
@@ -537,8 +537,8 @@ type Interface struct {
 }
 
 type InterfaceDriver struct {
-	Name   string `xml:"name,attr"`
-	Queues *uint  `xml:"queues,attr,omitempty"`
+	Name   string  `xml:"name,attr"`
+	Queues *uint32 `xml:"queues,attr,omitempty"`
 }
 
 type LinkState struct {

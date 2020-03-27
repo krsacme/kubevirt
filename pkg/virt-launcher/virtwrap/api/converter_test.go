@@ -1922,7 +1922,7 @@ var _ = Describe("Converter", func() {
 		})
 
 		It("should assign queues to a device if requested", func() {
-			expectedQueues := uint(2)
+			expectedQueues := uint32(2)
 
 			v1Disk := v1.Disk{
 				DiskDevice: v1.DiskDevice{
@@ -1931,7 +1931,7 @@ var _ = Describe("Converter", func() {
 			}
 			apiDisk := Disk{}
 			devicePerBus := map[string]int{}
-			numQueues := uint(2)
+			numQueues := uint32(2)
 			Convert_v1_Disk_To_api_Disk(&v1Disk, &apiDisk, devicePerBus, &numQueues)
 			Expect(apiDisk.Device).To(Equal("disk"), "expected disk device to be defined")
 			Expect(*(apiDisk.Driver.Queues)).To(Equal(expectedQueues), "expected queues to be 2")
@@ -1951,7 +1951,7 @@ var _ = Describe("Converter", func() {
 		})
 
 		It("should honor multiQueue setting", func() {
-			var expectedQueues uint = 2
+			var expectedQueues uint32 = 2
 
 			domain := vmiToDomain(vmi, &ConverterContext{UseEmulation: true, SMBios: &cmdv1.SMBios{}})
 			Expect(*(domain.Spec.Devices.Disks[0].Driver.Queues)).To(Equal(expectedQueues),
@@ -2049,14 +2049,14 @@ var _ = Describe("Converter", func() {
 		})
 
 		It("should assign queues to a device if requested", func() {
-			var expectedQueues uint = 2
+			var expectedQueues uint32 = 2
 
 			domain := vmiToDomain(vmi, &ConverterContext{UseEmulation: true})
 			Expect(*(domain.Spec.Devices.Interfaces[0].Driver.Queues)).To(Equal(expectedQueues),
 				"expected number of queues to equal number of requested vCPUs")
 		})
 		It("should assign queues to a device if requested based on vcpus", func() {
-			var expectedQueues uint = 4
+			var expectedQueues uint32 = 4
 
 			vmi.Spec.Domain.CPU = &v1.CPU{
 				Cores:   2,
