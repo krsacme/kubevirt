@@ -49,13 +49,14 @@ import (
 )
 
 const (
-	CPUModeHostPassthrough = "host-passthrough"
-	CPUModeHostModel       = "host-model"
-	defaultIOThread        = uint(1)
-	EFICode                = "OVMF_CODE.fd"
-	EFIVars                = "OVMF_VARS.fd"
-	EFICodeSecureBoot      = "OVMF_CODE.secboot.fd"
-	EFIVarsSecureBoot      = "OVMF_VARS.secboot.fd"
+	CPUModeHostPassthrough  = "host-passthrough"
+	CPUModeHostModel        = "host-model"
+	defaultIOThread         = uint(1)
+	EFICode                 = "OVMF_CODE.fd"
+	EFIVars                 = "OVMF_VARS.fd"
+	EFICodeSecureBoot       = "OVMF_CODE.secboot.fd"
+	EFIVarsSecureBoot       = "OVMF_VARS.secboot.fd"
+	PodInterfaceNameDefault = "eth0"
 )
 
 // +k8s:deepcopy-gen=false
@@ -1292,6 +1293,15 @@ func Convert_v1_VirtualMachine_To_api_Domain(vmi *v1.VirtualMachineInstance, dom
 	}
 
 	return nil
+}
+
+func GetPodInterfaceName(networks map[string]*v1.Network, cniNetworks map[string]int, ifaceName string) string {
+	if networks[ifaceName].Multus != nil && !networks[ifaceName].Multus.Default {
+		// multus pod interfaces named netX
+		return fmt.Sprintf("net%d", cniNetworks[ifaceName])
+	} else {
+		return PodInterfaceNameDefault
+	}
 }
 
 func getVirtualMemory(vmi *v1.VirtualMachineInstance) *resource.Quantity {
