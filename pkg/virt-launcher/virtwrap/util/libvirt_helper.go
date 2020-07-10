@@ -308,7 +308,7 @@ func NewDomainFromName(name string, vmiUID types.UID) *api.Domain {
 	return domain
 }
 
-func SetupLibvirt() error {
+func SetupLibvirt(hasVhostuser bool) error {
 
 	// TODO: setting permissions and owners is not part of device plugins.
 	// Configure these manually right now on "/dev/kvm"
@@ -355,6 +355,13 @@ func SetupLibvirt() error {
 		_, err = qemuConf.WriteString("hugetlbfs_mount = \"/dev/hugepages\"\n")
 	} else if !os.IsNotExist(err) {
 		return err
+	}
+
+	if hasVhostuser {
+		_, err = qemuConf.WriteString("group = \"hugetlbfs\"\n")
+		if err != nil {
+			return err
+		}
 	}
 
 	// Let libvirt log to stderr
