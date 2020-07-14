@@ -89,6 +89,10 @@ func (l *PodInterface) PlugPhase1(vmi *v1.VirtualMachineInstance, iface *v1.Inte
 		return nil
 	}
 
+	if iface.Vhostuser != nil {
+		return nil
+	}
+
 	driver, err := getPhase1Binding(vmi, iface, network, podInterfaceName)
 	if err != nil {
 		return err
@@ -153,6 +157,10 @@ func (l *PodInterface) PlugPhase2(vmi *v1.VirtualMachineInstance, iface *v1.Inte
 
 	// There is nothing to plug for SR-IOV devices
 	if iface.SRIOV != nil {
+		return nil
+	}
+
+	if iface.Vhostuser != nil {
 		return nil
 	}
 

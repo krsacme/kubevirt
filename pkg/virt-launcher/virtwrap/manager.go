@@ -40,6 +40,9 @@ import (
 	"sync"
 	"time"
 
+	apputil "github.com/krsacme/app-netutil/lib/v1alpha"
+	apputiltypes "github.com/krsacme/app-netutil/pkg/types"
+
 	cmdclient "kubevirt.io/kubevirt/pkg/virt-handler/cmd-client"
 	eventsclient "kubevirt.io/kubevirt/pkg/virt-launcher/notify-client"
 
@@ -61,6 +64,7 @@ import (
 	"kubevirt.io/kubevirt/pkg/hooks"
 	hostdisk "kubevirt.io/kubevirt/pkg/host-disk"
 	"kubevirt.io/kubevirt/pkg/ignition"
+	pkgutil "kubevirt.io/kubevirt/pkg/util"
 	"kubevirt.io/kubevirt/pkg/util/net/ip"
 	migrationproxy "kubevirt.io/kubevirt/pkg/virt-handler/migration-proxy"
 	agentpoller "kubevirt.io/kubevirt/pkg/virt-launcher/virtwrap/agent-poller"
@@ -1110,6 +1114,18 @@ func parseDeviceAddress(addrString string) []string {
 	}
 	return addrs
 }
+
+func fillVhostuserInfos(netInfos *apputiltypes.InterfaceResponse, vhostuserInfos map[string]api.VhostuserInfo) {
+	for _, iface := range netInfos.Interface {
+		if iface.Type == "vhost" {
+			var vhost api.VhostuserInfo
+			vhost.Path = iface.Vhost.Socketpath
+			vhost.Mode = iface.Vhost.Mode
+			vhostuserInfos[iface.IfName] = vhost
+		}
+	}
+}
+
 func (l *LibvirtDomainManager) SyncVMI(vmi *v1.VirtualMachineInstance, useEmulation bool, options *cmdv1.VirtualMachineOptions) (*api.DomainSpec, error) {
 	l.domainModifyLock.Lock()
 	defer l.domainModifyLock.Unlock()
@@ -1165,6 +1181,16 @@ func (l *LibvirtDomainManager) SyncVMI(vmi *v1.VirtualMachineInstance, useEmulat
 		}
 	}
 
+	vhostuserInfos := make(map[string]api.VhostuserInfo)
+	if pkgutil.IsVhostuserVmi(vmi) {
+		netInfos, err := apputil.GetInterfaces()
+		if err != nil {
+			logger.Reason(err).Error("failed to get interface details from annotations")
+			return nil, err
+		}
+		fillVhostuserInfos(netInfos, vhostuserInfos)
+	}
+
 	// Map the VirtualMachineInstance to the Domain
 	c := &api.ConverterContext{
 		Architecture:      runtime.GOARCH,
@@ -1179,6 +1205,7 @@ func (l *LibvirtDomainManager) SyncVMI(vmi *v1.VirtualMachineInstance, useEmulat
 		VgpuDevices:       getEnvAddressListByPrefix(vgpuEnvPrefix),
 		EmulatorThreadCpu: emulatorThreadCpu,
 		OVMFPath:          l.ovmfPath,
+		VhostuserInfos:    vhostuserInfos,
 	}
 	if options != nil && options.VirtualMachineSMBios != nil {
 		c.SMBios = options.VirtualMachineSMBios

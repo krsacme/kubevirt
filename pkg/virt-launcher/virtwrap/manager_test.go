@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	apputiltypes "github.com/krsacme/app-netutil/pkg/types"
 	libvirt "github.com/libvirt/libvirt-go"
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/extensions/table"
@@ -873,6 +874,51 @@ var _ = Describe("getEnvAddressListByPrefix with vgpu prefix", func() {
 		Expect(addrs[1]).To(Equal("aa618089-8b16-4d01-a136-25a0f3c73124"))
 	})
 
+})
+
+var _ = Describe("fillVhostuserInfos", func() {
+	podIfaceNormal := &apputiltypes.InterfaceData{
+		IfName: "default",
+		Name:   "default",
+		Type:   apputiltypes.INTERFACE_TYPE_KERNEL,
+	}
+	podIfaceVhostuser := &apputiltypes.InterfaceData{
+		IfName: "net1",
+		Name:   "default",
+		Type:   apputiltypes.INTERFACE_TYPE_VHOST,
+		Vhost: &apputiltypes.VhostData{
+			Socketpath: "/var/lib/vhost_sockets/a123456_net1",
+			Mode:       "server",
+		},
+	}
+	It("returns empty map with no interfaces", func() {
+		vhostuserInfos := make(map[string]api.VhostuserInfo)
+		netInfos := &apputiltypes.InterfaceResponse{}
+		fillVhostuserInfos(netInfos, vhostuserInfos)
+		Expect(len(vhostuserInfos)).To(Equal(0))
+	})
+	It("returns one item with one vhostuser interface", func() {
+		vhostuserInfos := make(map[string]api.VhostuserInfo)
+		netInfos := &apputiltypes.InterfaceResponse{}
+		netInfos.Interface = append(netInfos.Interface, podIfaceVhostuser)
+		fillVhostuserInfos(netInfos, vhostuserInfos)
+		Expect(len(vhostuserInfos)).To(Equal(1))
+	})
+	It("returns empty map with one kernel interface", func() {
+		vhostuserInfos := make(map[string]api.VhostuserInfo)
+		netInfos := &apputiltypes.InterfaceResponse{}
+		netInfos.Interface = append(netInfos.Interface, podIfaceNormal)
+		fillVhostuserInfos(netInfos, vhostuserInfos)
+		Expect(len(vhostuserInfos)).To(Equal(0))
+	})
+	It("returns one item with one vhostuser and one kernel interfaces", func() {
+		vhostuserInfos := make(map[string]api.VhostuserInfo)
+		netInfos := &apputiltypes.InterfaceResponse{}
+		netInfos.Interface = append(netInfos.Interface, podIfaceNormal)
+		netInfos.Interface = append(netInfos.Interface, podIfaceVhostuser)
+		fillVhostuserInfos(netInfos, vhostuserInfos)
+		Expect(len(vhostuserInfos)).To(Equal(1))
+	})
 })
 
 func newVMI(namespace, name string) *v1.VirtualMachineInstance {

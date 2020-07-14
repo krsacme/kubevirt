@@ -532,6 +532,29 @@ var _ = Describe("Pod Network", func() {
 				Expect(domain.Spec.QEMUCmd.QEMUArg[1]).To(Equal(api.Arg{Value: "e1000,netdev=default,id=default"}))
 			})
 		})
+
+		Context("Vhostuser Plug", func() {
+			It("Does not crash", func() {
+				// Plug doesn't do anything for vhostuser so it's enough to pass an empty domain
+				domain := &api.Domain{}
+				// Same for network
+				net := &v1.Network{}
+
+				iface := &v1.Interface{
+					Name: "vhostuser",
+					InterfaceBindingMethod: v1.InterfaceBindingMethod{
+						Vhostuser: &v1.InterfaceVhostuser{},
+					},
+				}
+				vmi := newVMI("testnamespace", "testVmName")
+				podiface := PodInterface{}
+				err := podiface.PlugPhase1(vmi, iface, net, "fakeiface", pid)
+				Expect(err).ToNot(HaveOccurred())
+
+				err = podiface.PlugPhase2(vmi, iface, net, domain, "fakeiface")
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
 	})
 
 	Context("Masquerade startDHCP", func() {

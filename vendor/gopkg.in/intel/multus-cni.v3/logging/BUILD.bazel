@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["logging.go"],
+    importmap = "kubevirt.io/kubevirt/vendor/gopkg.in/intel/multus-cni.v3/logging",
+    importpath = "gopkg.in/intel/multus-cni.v3/logging",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/pkg/errors:go_default_library"],
+)
